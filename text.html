@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>本地文本缓存器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: "微软雅黑", sans-serif;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 28px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        textarea {
+            width: 100%;
+            height: 300px;
+            padding: 15px;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 16px;
+            resize: vertical;
+            margin-bottom: 15px;
+            transition: border-color 0.3s;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+        }
+        .status {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            padding: 12px;
+            background-color: #f9f9f9;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+        .status.updated {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 12px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+            min-width: 120px;
+        }
+        button:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .btn-clear {
+            background-color: #f44336;
+        }
+        .btn-clear:hover {
+            background-color: #d32f2f;
+        }
+        .btn-export {
+            background-color: #2196F3;
+        }
+        .btn-export:hover {
+            background-color: #1976D2;
+        }
+        .btn-import {
+            background-color: #FF9800;
+        }
+        .btn-import:hover {
+            background-color: #F57C00;
+        }
+        .btn-copy {
+            background-color: #9C27B0;
+        }
+        .btn-copy:hover {
+            background-color: #7B1FA2;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-value {
+            font-weight: bold;
+            font-size: 18px;
+            color: #333;
+        }
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+        .search-box {
+            margin-bottom: 20px;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .highlight {
+            background-color: yellow;
+            font-weight: bold;
+        }
+        .history-section {
+            margin-top: 30px;
+        }
+        .history-section h2 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .history-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        .history-item {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .history-item:hover {
+            background-color: #f5f5f5;
+        }
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        .timestamp {
+            font-size: 12px;
+            color: #999;
+            float: right;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 500px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: black;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            .button-group {
+                flex-direction: column;
+                align-items: center;
+            }
+            button {
+                width: 100%;
+                max-width: 300px;
+            }
+            .stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+                <h1>📝 本地文本缓存器</h1>
+            <a href="test.html" class="back-btn" style="display:inline-flex;align-items:center;gap:6px;padding:6px 16px;margin:10px auto 18px auto;border-radius:8px;background:linear-gradient(90deg,#eaf6ff 60%,#fafdff 100%);color:#4c63d2;font-weight:600;font-size:15px;text-decoration:none;box-shadow:0 2px 8px rgba(76,99,210,0.08);border:1.5px solid #b3e0ff;transition:background 0.18s;">
+                    <span style="font-size:18px;">←</span>返回工具导航
+                </a>
+        <p class="subtitle">自动保存您的文本内容，支持多种实用功能</p>
+        
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="🔍 在文本中搜索...">
+        </div>
+        
+        <textarea id="textInput" placeholder="请输入需要缓存的文本内容..."></textarea>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="charCount">0</div>
+                <div class="stat-label">字符数</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="wordCount">0</div>
+                <div class="stat-label">单词数</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="lineCount">0</div>
+                <div class="stat-label">行数</div>
+            </div>
+        </div>
+        
+        <div class="status" id="status">已自动加载上次保存的内容，输入时实时缓存</div>
+        
+        <div class="button-group">
+            <button id="clearBtn" class="btn-clear">🗑️ 清空内容</button>
+            <button id="copyBtn" class="btn-copy">📋 复制内容</button>
+            <button id="exportBtn" class="btn-export">💾 导出文件</button>
+            <button id="importBtn" class="btn-import">📂 导入文件</button>
+            <button id="historyBtn">🕒 历史记录</button>
+        </div>
+        
+        <div class="history-section">
+            <h2>📌 快速访问</h2>
+            <div class="history-list" id="historyList">
+                <!-- 历史记录将在这里显示 -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- 导入文件的隐藏输入框 -->
+    <input type="file" id="fileInput" accept=".txt,.md,.html" style="display: none;">
+    
+    <!-- 历史记录模态框 -->
+    <div id="historyModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>🕒 历史记录</h2>
+            <div id="modalHistoryList" style="max-height: 300px; overflow-y: auto; margin-top: 15px;">
+                <!-- 历史记录将在这里显示 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 获取DOM元素
+        const textInput = document.getElementById('textInput');
+        const status = document.getElementById('status');
+        const clearBtn = document.getElementById('clearBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const importBtn = document.getElementById('importBtn');
+        const fileInput = document.getElementById('fileInput');
+        const historyBtn = document.getElementById('historyBtn');
+        const historyList = document.getElementById('historyList');
+        const historyModal = document.getElementById('historyModal');
+        const modalHistoryList = document.getElementById('modalHistoryList');
+        const closeBtn = document.querySelector('.close');
+        const searchInput = document.getElementById('searchInput');
+        const charCount = document.getElementById('charCount');
+        const wordCount = document.getElementById('wordCount');
+        const lineCount = document.getElementById('lineCount');
+        
+        const storageKey = 'savedText'; // 存储数据的键名
+        const historyKey = 'textHistory'; // 历史记录的键名
+        
+        // 页面加载时读取缓存
+        window.onload = function() {
+            loadSavedText();
+            updateStats();
+            loadHistory();
+            loadQuickHistory();
+        };
+        
+        // 加载保存的文本
+        function loadSavedText() {
+            const savedText = localStorage.getItem(storageKey);
+            if (savedText) {
+                textInput.value = savedText;
+                status.textContent = '✅ 已成功加载上次保存的内容';
+                status.classList.add('updated');
+                setTimeout(() => status.classList.remove('updated'), 2000);
+            } else {
+                status.textContent = 'ℹ️ 首次使用，输入内容将自动缓存';
+            }
+        }
+        
+        // 更新统计信息
+        function updateStats() {
+            const text = textInput.value;
+            charCount.textContent = text.length;
+            wordCount.textContent = text.trim() ? text.trim().split(/\s+/).length : 0;
+            lineCount.textContent = text.split(/\r\n|\r|\n/).length;
+        }
+        
+        // 输入时实时缓存
+        textInput.addEventListener('input', function() {
+            localStorage.setItem(storageKey, textInput.value);
+            status.textContent = '✅ 内容已实时缓存';
+            status.classList.add('updated');
+            setTimeout(() => status.classList.remove('updated'), 2000);
+            updateStats();
+            saveToHistory(textInput.value);
+        });
+        
+        // 搜索功能
+        searchInput.addEventListener('input', function() {
+            const searchTerm = searchInput.value;
+            if (searchTerm) {
+                highlightText(searchTerm);
+            } else {
+                // 清除高亮
+                textInput.value = textInput.value.replace(/<mark class="highlight">(.*?)<\/mark>/g, '$1');
+            }
+        });
+        
+        // 高亮搜索文本
+        function highlightText(term) {
+            const text = textInput.value;
+            const regex = new RegExp(`(${term})`, 'gi');
+            const highlightedText = text.replace(regex, '<mark class="highlight">$1</mark>');
+            textInput.value = highlightedText;
+        }
+        
+        // 清空内容和缓存
+        clearBtn.addEventListener('click', function() {
+            if (confirm('确定要清空所有内容吗？清空后无法恢复')) {
+                textInput.value = '';
+                localStorage.removeItem(storageKey);
+                status.textContent = 'ℹ️ 内容已清空，重新输入将再次缓存';
+                updateStats();
+            }
+        });
+        
+        // 复制内容到剪贴板
+        copyBtn.addEventListener('click', function() {
+            if (textInput.value) {
+                textInput.select();
+                document.execCommand('copy');
+                status.textContent = '✅ 内容已复制到剪贴板';
+                status.classList.add('updated');
+                setTimeout(() => status.classList.remove('updated'), 2000);
+            } else {
+                status.textContent = '⚠️ 没有内容可复制';
+            }
+        });
+        
+        // 导出文件
+        exportBtn.addEventListener('click', function() {
+            const text = textInput.value;
+            if (!text) {
+                status.textContent = '⚠️ 没有内容可导出';
+                return;
+            }
+            
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'text-cache-' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            status.textContent = '✅ 文件已导出';
+            status.classList.add('updated');
+            setTimeout(() => status.classList.remove('updated'), 2000);
+        });
+        
+        // 导入文件
+        importBtn.addEventListener('click', function() {
+            fileInput.click();
+        });
+        
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    textInput.value = e.target.result;
+                    localStorage.setItem(storageKey, textInput.value);
+                    status.textContent = '✅ 文件已导入并缓存';
+                    status.classList.add('updated');
+                    setTimeout(() => status.classList.remove('updated'), 2000);
+                    updateStats();
+                    saveToHistory(textInput.value);
+                };
+                reader.readAsText(file);
+            }
+        });
+        
+        // 保存到历史记录
+        function saveToHistory(text) {
+            if (!text.trim()) return;
+            
+            const history = JSON.parse(localStorage.getItem(historyKey) || '[]');
+            const now = new Date();
+            const timestamp = now.toLocaleString('zh-CN');
+            
+            // 检查是否与最近一次记录相同
+            if (history.length > 0 && history[0].text === text) {
+                // 更新时间戳
+                history[0].timestamp = timestamp;
+            } else {
+                // 添加新记录
+                history.unshift({
+                    text: text,
+                    timestamp: timestamp,
+                    id: Date.now()
+                });
+                
+                // 限制历史记录数量
+                if (history.length > 20) {
+                    history.pop();
+                }
+            }
+            
+            localStorage.setItem(historyKey, JSON.stringify(history));
+            loadQuickHistory();
+        }
+        
+        // 加载快速历史记录
+        function loadQuickHistory() {
+            const history = JSON.parse(localStorage.getItem(historyKey) || '[]');
+            historyList.innerHTML = '';
+            
+            // 只显示最近5条记录
+            const recentHistory = history.slice(0, 5);
+            
+            if (recentHistory.length === 0) {
+                historyList.innerHTML = '<div class="history-item">暂无历史记录</div>';
+                return;
+            }
+            
+            recentHistory.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `
+                    <span>${item.text.substring(0, 30)}${item.text.length > 30 ? '...' : ''}</span>
+                    <span class="timestamp">${item.timestamp}</span>
+                `;
+                div.addEventListener('click', () => {
+                    textInput.value = item.text;
+                    localStorage.setItem(storageKey, item.text);
+                    status.textContent = '✅ 已加载历史记录';
+                    status.classList.add('updated');
+                    setTimeout(() => status.classList.remove('updated'), 2000);
+                    updateStats();
+                });
+                historyList.appendChild(div);
+            });
+        }
+        
+        // 显示完整历史记录
+        historyBtn.addEventListener('click', function() {
+            const history = JSON.parse(localStorage.getItem(historyKey) || '[]');
+            modalHistoryList.innerHTML = '';
+            
+            if (history.length === 0) {
+                modalHistoryList.innerHTML = '<div class="history-item">暂无历史记录</div>';
+            } else {
+                history.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'history-item';
+                    div.innerHTML = `
+                        <div>
+                            <span>${item.text.substring(0, 50)}${item.text.length > 50 ? '...' : ''}</span>
+                            <span class="timestamp">${item.timestamp}</span>
+                        </div>
+                        <div style="margin-top: 5px; font-size: 12px; color: #666;">
+                            ${item.text.length} 字符
+                        </div>
+                    `;
+                    div.addEventListener('click', () => {
+                        textInput.value = item.text;
+                        localStorage.setItem(storageKey, item.text);
+                        status.textContent = '✅ 已加载历史记录';
+                        status.classList.add('updated');
+                        setTimeout(() => status.classList.remove('updated'), 2000);
+                        updateStats();
+                        historyModal.style.display = 'none';
+                    });
+                    modalHistoryList.appendChild(div);
+                });
+            }
+            
+            historyModal.style.display = 'block';
+        });
+        
+        // 关闭模态框
+        closeBtn.addEventListener('click', function() {
+            historyModal.style.display = 'none';
+        });
+        
+        window.addEventListener('click', function(event) {
+            if (event.target == historyModal) {
+                historyModal.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KYY</title>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <style>
+    .tag-filter span[data-tag="AI"] {
+      position: relative;
+      background: linear-gradient(90deg,#eaf6ff 60%,#fafdff 100%);
+      color: #3498db;
+      font-weight: 600;
+      border: 1.5px solid #b3e0ff;
+    }
+    .tag-filter span[data-tag="AI"].on {
+      background: linear-gradient(90deg,#3498db 60%,#6dd5fa 100%);
+      color: #fff;
+      border-color: #3498db;
+      box-shadow: 0 2px 8px rgba(52,152,219,0.13);
+    }
+    .ctrl {
+      background: rgba(255,255,255,0.90);
+      box-shadow: 0 8px 32px rgba(52,152,219,0.13),0 2px 8px 0 rgba(0,0,0,0.04);
+      border-radius: 18px;
+      border: 1.5px solid #e3f0fa;
+    }
+    :root{
+      --theme:#4c63d2;
+      --theme-gradient:linear-gradient(135deg,#4c63d2 0%,#00bcd4 100%);
+      --gap:14px;
+      --radius:16px;
+      --card-shadow:0 6px 32px 0 rgba(76,99,210,0.12),0 1.5px 6px 0 rgba(0,0,0,0.04);
+      --card-hover-shadow:0 12px 36px 0 rgba(76,99,210,0.20),0 2px 8px 0 rgba(0,0,0,0.06);
+      --card-bg:linear-gradient(135deg,#fff 80%,#f0f4ff 100%);
+      --body-bg:linear-gradient(120deg,#f8f9ff 60%,#e8f2ff 100%);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font:16px/1.7 'Segoe UI',Roboto,'Helvetica Neue',Arial,'Noto Sans',sans-serif;
+      background:var(--body-bg);
+      background-image: 
+        radial-gradient(circle at 1px 1px, rgba(76,99,210,0.01) 1px, transparent 0);
+      background-size: 20px 20px;
+      color:#2d3a4a;
+      padding:var(--gap);
+      min-height:100vh;
+      letter-spacing:0.02em;
+      transition:background 0.4s;
+    }
+    a{color:inherit;text-decoration:none}
+    /* 顶部操作区 */
+    .ctrl{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:var(--gap);
+      margin-bottom:20px;
+      background:rgba(255,255,255,0.10);
+      backdrop-filter:blur(8px);
+      -webkit-backdrop-filter:blur(8px);
+      border-radius:var(--radius);
+      box-shadow:0 2px 12px rgba(76,99,210,0.08);
+      padding:12px 18px 12px 18px;
+      border:1px solid rgba(255,255,255,0.2);
+      flex-wrap:wrap;
+    }
+    .ctrl .left{display:flex;align-items:center;gap:12px;flex:1;min-width:260px}
+    .search-wrap{position:relative;flex:1;min-width:220px}
+    .search-wrap .icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--theme);opacity:0.95}
+    .search-wrap input{width:100%;padding:12px 40px 12px 42px;border-radius:12px;border:1px solid #e6eefc;background:#fff}
+    .search-wrap input::placeholder{color:#9fb2d9}
+    .search-clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:#f0f6ff;border:0;color:var(--theme);cursor:pointer;padding:6px;border-radius:8px;display:none}
+    .search-clear.visible{display:block}
+    .ctrl .right{display:flex;align-items:center;gap:12px}
+    .hero{max-width:1200px;margin:0 auto 18px;padding:18px 22px;border-radius:12px;background:linear-gradient(90deg,rgba(76,99,210,0.06),rgba(0,188,212,0.03));display:flex;align-items:center;gap:16px}
+    .hero .logo{width:52px;height:52px;border-radius:12px;background:var(--theme-gradient);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:20px;box-shadow:0 8px 30px rgba(76,99,210,0.12)}
+    .hero .title{font-size:18px;font-weight:700;color:var(--theme)}
+    .tag-filter{max-width:720px;overflow:auto;padding-bottom:6px}
+    .tag-filter::-webkit-scrollbar{height:8px}
+    .tag-filter::-webkit-scrollbar-thumb{background:linear-gradient(90deg,var(--theme),#26c6da);border-radius:8px}
+    .ctrl input:focus{
+      border-color:var(--theme);
+      box-shadow:0 0 0 2px #eaf6ff;
+    }
+    .tag-filter{display:flex;gap:var(--gap)}
+    .tag-filter span{
+      padding:5px 16px;
+      border:1.5px solid #d0e3f7;
+      border-radius:var(--radius);
+      cursor:pointer;
+      font-size:13px;
+      background:#fafdff;
+      color:#3498db;
+      font-weight:500;
+      transition:background 0.18s,border 0.18s,color 0.18s;
+      box-shadow:0 1px 2px rgba(52,152,219,0.04);
+    }
+    .tag-filter span.on{
+      background:var(--theme);
+      color:#fff;
+      border-color:var(--theme);
+      box-shadow:0 2px 8px rgba(52,152,219,0.10);
+    }
+    #reset{
+      padding:7px 18px;
+      border:1.5px solid #d0e3f7;
+      border-radius:var(--radius);
+      background:linear-gradient(90deg,#fafdff 60%,#eaf6ff 100%);
+      cursor:pointer;
+      font-size:14px;
+      color:#3498db;
+      font-weight:500;
+      transition:background 0.18s,border 0.18s,color 0.18s;
+    }
+    #reset:hover{
+      background:var(--theme);
+      color:#fff;
+      border-color:var(--theme);
+    }
+    /* 列表本体 */
+    .wrap{
+      max-width:1200px;
+      margin:0 auto;
+    }
+    .card-list {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--card-shadow);
+  padding: 20px 18px 18px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      cursor: pointer;
+      transition: box-shadow 0.3s ease-out,transform 0.3s ease-out,border 0.3s ease-out;
+      border: 1.5px solid #e3f0fa;
+      min-width: 0;
+      position: relative;
+      overflow: hidden;
+      z-index:1;
+    }
+    .card:before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; right: 0; bottom: 0;
+      background: linear-gradient(120deg,rgba(52,152,219,0.07) 0%,rgba(255,255,255,0.0) 100%);
+      z-index: 0;
+      pointer-events: none;
+      border-radius: var(--radius);
+    }
+    .card:hover {
+      box-shadow: 0 18px 46px rgba(76,99,210,0.18);
+      border-color: var(--theme);
+      transform: translateY(-6px) scale(1.025);
+    }
+    .fav-btn{transition:transform 150ms ease,color 150ms}
+    .fav-btn:active{transform:scale(0.92)}
+    .card .tag{opacity:0;transform:translateY(6px);animation:tagIn 360ms forwards}
+    .card .tag:nth-child(1){animation-delay:60ms}
+    .card .tag:nth-child(2){animation-delay:120ms}
+    .card .tag:nth-child(3){animation-delay:180ms}
+    @keyframes tagIn{to{opacity:1;transform:none}}
+    mark{background:linear-gradient(90deg,#fff08a,#ffd28a);padding:0 2px;border-radius:2px}
+    .card .name {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 2px;
+      color: var(--theme);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing:0.01em;
+      z-index:2;
+    }
+    .card .favicon {
+      width:28px;height:28px;border-radius:6px;overflow:hidden;flex-shrink:0;background:#fff;border:1px solid rgba(0,0,0,0.04);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--theme);
+    }
+    .card .visit {
+      position:absolute;right:12px;top:12px;background:var(--theme);color:#fff;padding:6px 10px;border-radius:12px;font-size:13px;display:none;z-index:3;box-shadow:0 6px 20px rgba(76,99,210,0.12);cursor:pointer;border:0;
+    }
+    .card:hover .visit{display:block}
+    .card .name .emoji {
+      font-size: 18px;
+      margin-right: 8px;
+    }
+    .card .desc {
+      font-size: 16px;
+      font-weight: 400;
+      color: #2f3f52;
+      flex: 1;
+      margin-bottom: 4px;
+      min-height: 38px;
+      z-index:2;
+      line-height:1.7;
+    }
+    .card .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 2px;
+      z-index:2;
+      max-height: 48px;
+      overflow: hidden;
+      position: relative;
+    }
+    .card .tags::after {
+      content: '...';
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      background: var(--card-bg);
+      padding-left: 4px;
+      font-size: 13px;
+      color: var(--theme);
+      opacity: 0.7;
+      display: none;
+    }
+    .card .tags.truncated::after {
+      display: block;
+    }
+    .card .tag {
+      background: linear-gradient(90deg,#eef8ff 40%,#fafdff 100%);
+      font-size: 14px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      color: #3498db;
+      font-weight:500;
+      box-shadow:0 1px 2px rgba(52,152,219,0.04);
+      border:1px solid #d0e3f7;
+      transition:background 0.18s,border 0.18s,color 0.18s;
+    }
+    .card .tag:hover {
+      background: var(--theme);
+      color: #fff;
+      border-color: var(--theme);
+    }
+    .card .go {
+      display: none;
+    }
+    .card .actions{display:flex;gap:8px;align-items:center;margin-top:8px}
+    .card .actions button{background:transparent;border:1px solid rgba(0,0,0,0.06);padding:6px 8px;border-radius:8px;cursor:pointer;color:var(--theme);font-weight:600}
+    .card .actions button:hover{background:var(--theme);color:#fff;border-color:var(--theme)}
+    .fade-in{animation:fadeIn 360ms ease both}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+    @media (max-width: 900px) {
+      .wrap{max-width:100vw;}
+      .card-list { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+      .card { padding: 18px 10px; }
+    }
+    @media (max-width: 600px) {
+      .card-list { grid-template-columns: 1fr; }
+      .card { padding: 14px 6px; }
+      .ctrl{padding:8px 6px 6px 6px;}
+      .ctrl .left{width:100%;flex-wrap:wrap}
+      .search-wrap{width:100%}
+      .ctrl .right{width:100%;justify-content:flex-end;margin-top:8px}
+    }
+    
+    /* 暗色模式 */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --theme: #6b7ae8;
+        --theme-gradient: linear-gradient(135deg,#6b7ae8 0%,#26c6da 100%);
+        --card-shadow: 0 6px 32px 0 rgba(107,122,232,0.15),0 1.5px 6px 0 rgba(0,0,0,0.08);
+        --card-hover-shadow: 0 12px 36px 0 rgba(107,122,232,0.25),0 2px 8px 0 rgba(0,0,0,0.10);
+        --card-bg: linear-gradient(135deg,#1a1d29 80%,#2a2d3a 100%);
+        --body-bg: linear-gradient(120deg,#0f1419 60%,#1a1d29 100%);
+      }
+      body {
+        background: var(--body-bg);
+        background-image: 
+          radial-gradient(circle at 1px 1px, rgba(107,122,232,0.02) 1px, transparent 0);
+        color: #e8eaed;
+      }
+      .ctrl {
+        background: rgba(26,29,41,0.15);
+        border: 1px solid rgba(107,122,232,0.2);
+      }
+      .ctrl input {
+        background: rgba(42,45,58,0.6);
+        border-color: rgba(107,122,232,0.3);
+        color: #e8eaed;
+      }
+      .card {
+        border-color: rgba(107,122,232,0.2);
+        color: #e8eaed;
+      }
+      .card .desc {
+        color: #b8bbbf;
+      }
+      .tag-filter span {
+        background: rgba(42,45,58,0.6);
+        border-color: rgba(107,122,232,0.3);
+        color: #6b7ae8;
+      }
+      .tag-filter span.on {
+        background: var(--theme-gradient);
+        color: #fff;
+      }
+    }
+  </style>
+</head>
+<body>
+
+
+    <div class="ctrl" role="region" aria-label="工具导航控制区">
+      <div class="left">
+  <a href="text.html" class="text-buffer-link" style="display:flex;align-items:center;gap:4px;padding:0 10px 0 0;text-decoration:none;color:var(--theme);font-weight:600;font-size:15px;">
+          <span style="font-size:18px;">📝</span>文本缓存器
+        </a>
+        <div class="search-wrap">
+          <span class="icon" aria-hidden>🔎</span>
+          <input id="search" placeholder="搜索名称 / 简介 / 标签" aria-label="搜索">
+          <button id="searchClear" class="search-clear" aria-label="清除搜索">✕</button>
+        </div>
+        <div class="tag-filter" role="list">
+          <span data-tag="all" class="on">全部</span>
+          <span data-tag="工具">工具</span>
+          <span data-tag="开发">开发</span>
+          <span data-tag="设计">设计</span>
+          <span data-tag="学习">学习</span>
+          <span data-tag="AI">AI</span>
+        </div>
+      </div>
+      <div class="right">
+        <div style="display:flex;align-items:center;gap:8px">
+          <label for="sortSelect" style="font-size:13px;color:#557">排序</label>
+          <select id="sortSelect" style="padding:6px;border-radius:8px">
+            <option value="default">默认</option>
+            <option value="name">按名称</option>
+            <option value="fav">按收藏</option>
+          </select>
+          <label for="pageSize" style="font-size:13px;color:#557">每页</label>
+          <select id="pageSize" style="padding:6px;border-radius:8px">
+            <option>6</option>
+            <option selected>12</option>
+            <option>24</option>
+          </select>
+        </div>
+        <div id="counter" style="min-width:120px;text-align:right;color:var(--theme);font-weight:600">显示 0 / 0</div>
+        <button id="exportBtn" title="导出为单文件" style="padding:8px 12px;border:1px solid #ddd;border-radius:var(--radius);background:#fff;cursor:pointer;">导出</button>
+        <button id="reset" style="padding:8px 14px;border:1px solid #ddd;border-radius:var(--radius);background:#fff;cursor:pointer;">重置</button>
+      </div>
+    </div>
+
+  <div class="wrap">
+    <div class="card-list" id="list">
+      <!-- 卡片数据将在JS中渲染 -->
+    </div>
+  </div>
+  <div style="max-width:1200px;margin:18px auto;display:flex;justify-content:center;gap:10px;align-items:center" id="pager">
+    <button class="prev" style="padding:8px 12px;border-radius:8px">上一页</button>
+    <div class="page-info">第 1 / 1 页</div>
+    <button class="next" style="padding:8px 12px;border-radius:8px">下一页</button>
+  </div>
+
+  <script>
+    // 卡片数据（可自动生成，或从原表格提取）
+    const cardData = [
+      {
+        name: "GitHub",
+        desc: "全球最大代码托管与开源协作平台",
+        tags: ["工具", "开发", "开源"],
+        url: "https://github.com",
+        dataTags: "工具,开发",
+        emoji: "🐙"
+      },
+      {
+        name: "Figma",
+        desc: "在线 UI 设计与实时多人协作工具",
+        tags: ["设计", "工具"],
+        url: "https://figma.com",
+        dataTags: "设计,工具",
+        emoji: "🎨"
+      },
+      {
+        name: "硬核指南",
+        desc: "AI工具与资源导航，聚合各类实用网站",
+        tags: ["工具", "AI"],
+        url: "https://yinghezhinan.com",
+        dataTags: "工具,AI",
+        emoji: "🧭"
+      },
+      {
+        name: "ChatSPSS",
+        desc: "SPSS在线智能问答与数据分析助手",
+        tags: ["AI", "学习"],
+        url: "https://chatspss.cn",
+        dataTags: "AI,学习",
+        emoji: "📊"
+      },
+      {
+        name: "YANWEB",
+        desc: "学术与科研资源聚合导航，方便检索论文、工具与学术服务",
+        tags: ["工具", "AI"],
+        url: "https://yanweb.top",
+        dataTags: "工具,AI",
+        emoji: "🌐"
+      },
+      {
+        name: "豆包",
+        desc: "字节跳动旗下AI助手，支持多种智能对话",
+        tags: ["AI", "工具"],
+        url: "https://www.doubao.com",
+        dataTags: "AI,工具",
+        emoji: "🤖"
+      },
+      {
+        name: "DeepSeek",
+        desc: "AI驱动的智能搜索与问答平台",
+        tags: ["AI", "搜索"],
+        url: "https://www.deepseek.com",
+        dataTags: "AI,搜索",
+        emoji: "🔍"
+      },
+      {
+        name: "Kimi",
+        desc: "Moonshot推出的AI助手，支持多轮对话与文档处理",
+        tags: ["AI", "助手"],
+        url: "https://www.kimi.com",
+        dataTags: "AI,助手",
+        emoji: "✨"
+      },
+      {
+        name: "ChatGPT",
+        desc: "OpenAI官方AI聊天助手，支持多语言智能对话",
+        tags: ["AI", "助手"],
+        url: "https://chat.openai.com",
+        dataTags: "AI,助手",
+        emoji: "💬"
+      },
+      {
+        name: "Docsmall",
+        desc: "免费在线图片与 PDF 处理工具集合（压缩、转换、OCR、清理等）",
+        tags: ["工具", "文件"],
+        url: "https://docsmall.com",
+        dataTags: "工具,文件",
+        emoji: "📄"
+      },
+      {
+        name: "KlingAI",
+        desc: "AI语音克隆与配音生成平台",
+        tags: ["AI", "语音"],
+        url: "https://app.klingai.com/cn/",
+        dataTags: "AI,语音",
+        emoji: "🎤"
+      },
+      {
+        name: "Canva",
+        desc: "在线平面设计与模板制作平台",
+        tags: ["设计", "工具"],
+        url: "https://www.canva.cn/",
+        dataTags: "设计,工具",
+        emoji: "🎨"
+      },
+      {
+        name: "TinyWow",
+        desc: "免费在线文件与媒体处理与转换工具（PDF、图片、视频等）",
+        tags: ["工具", "文件"],
+        url: "https://tinywow.com/",
+        dataTags: "工具,文件",
+        emoji: "🔧"
+      },
+      {
+        name: "FMHY",
+        desc: "免费资源导航与分享社区",
+        tags: ["资源", "导航"],
+        url: "https://fmhy.net/",
+        dataTags: "资源,导航",
+        emoji: "🗂️"
+      },
+      {
+        name: "VJ师",
+        desc: "高清视频素材下载平台",
+        tags: ["视频", "素材"],
+        url: "https://www.vjshi.com/?auction_id=519-cnbing&utm_source=cn.bing.com&utm_medium=cpc&utm_campaign=auction&utm_term=519&utm_content=jingpinci&msclkid=f1008594253314d565f0edcc9ef42b85",
+        dataTags: "视频,素材",
+        emoji: "🎬"
+      },
+      {
+        name: "软仓网",
+        desc: "软件资源与网盘分享平台",
+        tags: ["资源", "网盘"],
+        url: "https://www.ruancang.net/",
+        dataTags: "资源,网盘",
+        emoji: "💾"
+      },
+      {
+        name: "视频520",
+        desc: "视频素材与模板下载平台，提供实拍素材、模板与制作教程",
+        tags: ["视频", "工具"],
+        url: "https://shipin520.com/",
+        dataTags: "视频,工具",
+        emoji: "🎥"
+      },
+      {
+        name: "KMS.cx",
+        desc: "Windows/Office激活工具与教程",
+        tags: ["工具", "激活"],
+        url: "https://kms.cx/",
+        dataTags: "工具,激活",
+        emoji: "🔑"
+      },
+      {
+        name: "Goblin Tools",
+        desc: "AI驱动的效率与辅助工具集合",
+        tags: ["AI", "效率"],
+        url: "https://goblin.tools/",
+        dataTags: "AI,效率",
+        emoji: "🧙"
+      },
+      {
+        name: "FC8导航",
+        desc: "聚合各类实用工具与资源的导航网站",
+        tags: ["工具", "资源"],
+        url: "https://fc8.top/",
+        dataTags: "工具,资源",
+        emoji: "🧭"
+      },
+      {
+        name: "IT-Tools",
+        desc: "在线开发者工具集合，涵盖 JSON/XML/TOML 等格式转换与常用实用工具",
+        tags: ["工具", "开发"],
+        url: "https://it-tools.tech/",
+        dataTags: "工具,开发",
+        emoji: "🛠️"
+      },
+      {
+        name: "通义",
+        desc: "阿里云旗下的 AI 助手与创作平台（通义千问），面向对话与内容生成场景",
+        tags: ["AI", "工具"],
+        url: "https://www.tongyi.com/",
+        dataTags: "AI,工具",
+        emoji: "🤖"
+      },
+      {
+        name: "取文件",
+        desc: "安全加密的文件传输与临时提取服务，方便分享大文件",
+        tags: ["工具", "文件"],
+        url: "https://quwenjian.cc/",
+        dataTags: "工具,文件",
+        emoji: "📤"
+      },
+      {
+        name: "123Apps",
+        desc: "免费在线音视频、PDF 与文件编辑与转换工具集合（音频剪辑、视频编辑、PDF 操作）",
+        tags: ["工具", "音频", "视频"],
+        url: "https://123apps.com/",
+        dataTags: "工具,音频,视频",
+        emoji: "🎵"
+      },
+      {
+        name: "Moakt",
+        desc: "临时邮箱服务，提供一次性邮箱以保护隐私和临时接收邮件",
+        tags: ["工具","开发"],
+        url: "https://moakt.com/",
+        dataTags: "工具,开发",
+        emoji: "⚙️"
+      },
+      {
+        name: "LocallyTools",
+        desc: "开发者工具集合（JSON/UUID/图片/PDF/格式化），支持离线优先体验",
+        tags: ["开发","工具"],
+        url: "https://locallytools.com/zh-Hans/dev-tools",
+        dataTags: "开发,工具",
+        emoji: "🛠️"
+      },
+      {
+        name: "ZRead AI",
+        desc: "AI 驱动的阅读与文章摘要平台，简化长文信息提取",
+        tags: ["AI","阅读"],
+        url: "https://zread.ai",
+        dataTags: "AI,阅读",
+        emoji: "📚"
+      },
+      {
+        name: "Rocket.New",
+        desc: "便捷的短域名快速启动服务，用于一键创建新项目或快捷操作",
+        tags: ["工具","开发"],
+        url: "https://www.rocket.new/",
+        dataTags: "工具,开发",
+        emoji: "🚀"
+      },
+      {
+        name: "聚合数据",
+        desc: "提供多种开放 API 的聚合平台（Juhe），便于开发者接入各类数据服务",
+        tags: ["开发","API"],
+        url: "https://www.juhe.cn",
+        dataTags: "开发,API",
+        emoji: "🔗"
+      },
+      {
+        name: "HelloGitHub",
+        desc: "优质 GitHub 项目与开源资源推荐与整理平台",
+        tags: ["开发","开源"],
+        url: "https://hellogithub.com/",
+        dataTags: "开发,开源",
+        emoji: "💻"
+      },
+      {
+        name: "QQQYS",
+        desc: "实用工具与资源聚合导航站，提供软件下载与工具推荐",
+        tags: ["工具","资源"],
+        url: "https://qqqys.com/",
+        dataTags: "工具,资源",
+        emoji: "🧩"
+      },
+      {
+        name: "EasyChat",
+        desc: "轻量化 AI 聊天与客服解决方案，支持快速集成",
+        tags: ["AI","聊天"],
+        url: "https://easychat.top/",
+        dataTags: "AI,聊天",
+        emoji: "💬"
+      },
+      {
+        name: "Way to AGI",
+        desc: "关于通向通用人工智能(AGI)的资源与工具集合（中文页）",
+        tags: ["AI","研究"],
+        url: "https://www.waytoagi.com/zh",
+        dataTags: "AI,研究",
+        emoji: "🧠"
+      },
+      {
+        name: "C1N Offer3",
+        desc: "C1N 平台专项页面（Offer3），常见 AI 工具与服务入口",
+        tags: ["AI","工具"],
+        url: "https://c1n.cc/offer3",
+        dataTags: "AI,工具",
+        emoji: "🔗"
+      },
+      {
+        name: "Raphael",
+        desc: "Raphael：AI 设计与图像生成工具（中文页面），适合创作者快速生成视觉资产",
+        tags: ["设计","AI"],
+        url: "https://raphael.app/zh",
+        dataTags: "设计,AI",
+        emoji: "🎨"
+      }
+    ];
+
+  // 元素引用（提前声明，避免在 renderCards 调用时发生 TDZ 错误）
+  let searchInput, tagFilter, resetBtn, searchClear;
+
+  // 渲染卡片
+    // 分页与排序状态
+    let currentPage = 1; const pageSizeOptions=[6,12,24]; let pageSize = 12;
+    let sortMode = 'default'; // 'default' | 'name' | 'fav'
+
+  function escapeHtml(str){ return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function highlight(text, kw){ if(!kw) return escapeHtml(text); const s = escapeHtml(text); try{ const re = new RegExp('(' + kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')','ig'); return s.replace(re, '<mark>$1</mark>'); }catch(e){return s;} }
+
+  function renderCards() {
+      const list = document.getElementById('list');
+      list.innerHTML = '';
+      const counter = document.getElementById('counter');
+      // 先复制数据
+      let items = cardData.slice();
+  let favMap = JSON.parse(localStorage.getItem('favMap')||'{}');
+
+      // 过滤：根据当前标签和搜索关键字（在分页前过滤）
+      const kw = (searchInput && searchInput.value) ? searchInput.value.trim().toLowerCase() : '';
+      const activeTag = (document.querySelector('.tag-filter span.on') && document.querySelector('.tag-filter span.on').dataset) ? document.querySelector('.tag-filter span.on').dataset.tag : 'all';
+      items = items.filter(item => {
+        const txt = [item.name, item.desc, (item.tags||[]).join(' '), item.dataTags||''].join(' ').toLowerCase();
+        const hitTag = (activeTag === 'all') || (item.dataTags && item.dataTags.includes(activeTag));
+        const hitKw = !kw || txt.includes(kw);
+        return hitTag && hitKw;
+      });
+
+      // 排序
+      if (sortMode==='name') items.sort((a,b)=>a.name.localeCompare(b.name));
+      if (sortMode==='fav') items.sort((a,b)=>((favMap[b.url]?1:0)-(favMap[a.url]?1:0)));
+
+      const total = items.length;
+      const totalPages = Math.max(1, Math.ceil(total/pageSize));
+      if (currentPage>totalPages) currentPage = totalPages;
+      const start = (currentPage-1)*pageSize, end = start+pageSize;
+
+      items.slice(start,end).forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.setAttribute('data-tags', item.dataTags);
+        // 使用 DuckDuckGo 的图标代理，提高命中率；回退到站点 /favicon.ico
+        try {
+          const host = (new URL(item.url)).hostname;
+          var faviconUrl = item.favicon || `https://icons.duckduckgo.com/ip3/${host}.ico`;
+        } catch(e) {
+          var faviconUrl = item.favicon || (new URL('/', item.url).origin + '/favicon.ico');
+        }
+        const cardFavMap = JSON.parse(localStorage.getItem('favMap')||'{}');
+        const isFav = !!cardFavMap[item.url];
+        card.innerHTML = `
+          <button class="visit" title="打开" aria-label="打开 ${item.name}">访问</button>
+          <button class="fav-btn" aria-label="收藏 ${item.name}" title="收藏" style="position:absolute;right:12px;bottom:12px;border:0;background:transparent;font-size:18px">${isFav ? '💖' : '🤍'}</button>
+          <div style="display:flex;align-items:center;gap:12px;z-index:2">
+            <div class="favicon"><img src="${faviconUrl}" alt="${item.name} 图标" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"/></div>
+            <div style="flex:1">
+              <div class="name" tabindex="0"><span class="emoji">${item.emoji}</span>${item.name}</div>
+              <div class="desc">${item.desc}</div>
+            </div>
+          </div>
+          <div class="tags">${item.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
+          <div class="actions">
+            <button class="open-btn" aria-label="在新标签页中打开 ${item.name}">外链</button>
+            <button class="copy-btn" aria-label="复制 ${item.name} 链接">复制链接</button>
+          </div>
+        `;
+
+        // 点击卡片空白处打开链接
+        card.addEventListener('click', (e) => {
+          const target = e.target;
+          if (target.closest('.visit')) return; // 按钮由单独事件处理
+          window.open(item.url, '_blank');
+        });
+        // 访问按钮
+        const visitBtn = card.querySelector('.visit');
+        visitBtn.addEventListener('click', (e) => { e.stopPropagation(); window.open(item.url, '_blank'); });
+        // 外链 & 复制
+        const openBtn = card.querySelector('.open-btn');
+        const copyBtn = card.querySelector('.copy-btn');
+        // 收藏
+        const favBtn = card.querySelector('.fav-btn');
+        favBtn.addEventListener('click', (e)=>{ e.stopPropagation();
+          const map = JSON.parse(localStorage.getItem('favMap')||'{}');
+          if (map[item.url]) { delete map[item.url]; favBtn.textContent='🤍'; } else { map[item.url]=true; favBtn.textContent='💖'; }
+          localStorage.setItem('favMap', JSON.stringify(map));
+        });
+        openBtn.addEventListener('click', (e) => { e.stopPropagation(); window.open(item.url, '_blank'); });
+        copyBtn.addEventListener('click', (e) => { e.stopPropagation();
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(item.url).then(()=>{
+              copyBtn.textContent = '已复制'; setTimeout(()=>copyBtn.textContent='复制链接',1200);
+            }).catch(()=>{ copyFallback(item.url, copyBtn); });
+          } else { copyFallback(item.url, copyBtn); }
+        });
+        
+        // 处理标签截断
+        setTimeout(() => {
+          const tagsContainer = card.querySelector('.tags');
+          if (tagsContainer.scrollHeight > tagsContainer.clientHeight) {
+            tagsContainer.classList.add('truncated');
+          }
+        }, 10);
+        
+        list.appendChild(card);
+        // 高亮名称与简介
+        try{
+          const q = (searchInput && searchInput.value)?searchInput.value.trim():'';
+          const nameEl = card.querySelector('.name');
+          const descEl = card.querySelector('.desc');
+          if (nameEl) nameEl.innerHTML = `<span class="emoji">${item.emoji}</span>${highlight(item.name,q)}`;
+          if (descEl) descEl.innerHTML = highlight(item.desc,q);
+        }catch(e){/* ignore */}
+        card.classList.add('fade-in');
+      });
+  // 更新计数（当前页显示数量 / 过滤后总数）
+  const showingCount = Math.max(0, Math.min(pageSize, total - (currentPage-1)*pageSize));
+  if (counter) counter.textContent = `显示 ${showingCount} / ${total}`;
+      // 分页控件
+      const pager = document.getElementById('pager');
+      if (pager) {
+        pager.querySelector('.page-info').textContent = `第 ${currentPage} / ${totalPages} 页`;
+        pager.querySelector('.prev').disabled = currentPage<=1;
+        pager.querySelector('.next').disabled = currentPage>=totalPages;
+      }
+    }
+    renderCards();
+
+    // 导出为单文件 HTML（内联样式与 favicon）
+    async function exportSingleFile() {
+      const docHtml = document.documentElement.outerHTML;
+      // 简易实现：用当前文档的 HTML 生成文件（注意：外部资源仍然外链，favicon 有可能未内联）
+      const blob = new Blob([docHtml], {type: 'text/html'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'tools-nav.html'; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),3000);
+    }
+    const exportBtn = document.getElementById('exportBtn');
+    if (exportBtn) exportBtn.addEventListener('click', ()=>{ exportSingleFile(); });
+
+    // 分页与排序控件绑定
+    const sortSelect = document.getElementById('sortSelect');
+    const pageSizeSelect = document.getElementById('pageSize');
+    const pagerDiv = document.getElementById('pager');
+    if (sortSelect) sortSelect.addEventListener('change',(e)=>{ sortMode = e.target.value; currentPage=1; renderCards(); });
+    if (pageSizeSelect) pageSizeSelect.addEventListener('change',(e)=>{ pageSize = parseInt(e.target.value||12); currentPage=1; renderCards(); });
+    if (pagerDiv) {
+      pagerDiv.querySelector('.prev').addEventListener('click',()=>{ if (currentPage>1) { currentPage--; renderCards(); }});
+      pagerDiv.querySelector('.next').addEventListener('click',()=>{ currentPage++; renderCards(); });
+    }
+
+  // 元素引用（已提前声明，赋值）
+  searchInput = document.getElementById('search');
+  tagFilter = document.querySelectorAll('.tag-filter span');
+  resetBtn = document.getElementById('reset');
+  searchClear = document.getElementById('searchClear');
+
+    function updateSearchClear() {
+      if (!searchClear || !searchInput) return;
+      if (searchInput.value && searchInput.value.trim().length>0) searchClear.classList.add('visible'); else searchClear.classList.remove('visible');
+    }
+    // 回退复制函数
+    function copyFallback(text, btn) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.position='fixed'; ta.style.left='-10000px'; document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta);
+        btn.textContent = '已复制'; setTimeout(()=>btn.textContent='复制链接',1200);
+      } catch (e) {
+        btn.textContent = '复制失败'; setTimeout(()=>btn.textContent='复制链接',1200);
+      }
+    }
+
+  // 监控搜索输入用于清除按钮显隐和过滤（使用 renderCards 保持分页一致）
+  if (searchInput) searchInput.addEventListener('input', (e)=>{ updateSearchClear(); currentPage=1; renderCards(); });
+  if (searchClear) { searchClear.addEventListener('click', ()=>{ searchInput.value=''; updateSearchClear(); currentPage=1; renderCards(); searchInput.focus(); }); }
+
+  // 过滤逻辑
+
+    function filter() {
+      const kw = searchInput.value.trim().toLowerCase();
+      const activeTag = document.querySelector('.tag-filter span.on').dataset.tag;
+      const counter = document.getElementById('counter');
+      document.querySelectorAll('.card-list .card').forEach(card => {
+        const txt = [
+          card.querySelector('.name')?.textContent || '',
+          card.querySelector('.desc')?.textContent || '',
+          Array.from(card.querySelectorAll('.tag')).map(t=>t.textContent).join(' '),
+          card.dataset.tags || ''
+        ].join(' ').toLowerCase();
+        const hitTag = activeTag === 'all' || (card.dataset.tags && card.dataset.tags.includes(activeTag));
+        const hitKw = !kw || txt.includes(kw);
+        card.style.display = (hitTag && hitKw) ? '' : 'none';
+      });
+      if (counter) counter.textContent = `显示 ${document.querySelectorAll('.card-list .card:not([style*="display: none"])').length} / ${cardData.length}`;
+    }
+
+    tagFilter.forEach(btn => btn.addEventListener('click', () => {
+      tagFilter.forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      currentPage = 1; renderCards();
+    }));
+
+    resetBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      tagFilter.forEach(b => b.classList.remove('on'));
+      tagFilter[0].classList.add('on');
+      currentPage = 1; renderCards();
+      searchInput.focus();
+    });
+  </script>
+</body>
+</html>
